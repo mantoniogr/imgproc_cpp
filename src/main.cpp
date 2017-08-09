@@ -22,7 +22,7 @@ int main(){
       std::cout << "Error...\n";
    }
 
-   cv::Mat filtered = geodesic_dilation(src, erosion(src, 3));
+   cv::Mat filtered = geodesic_dilation(src, erosion(src,7));
 
    cv::namedWindow("Original", CV_WINDOW_AUTOSIZE);
    cv::imshow("Original", src);

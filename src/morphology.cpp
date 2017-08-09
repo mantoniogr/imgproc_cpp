@@ -164,7 +164,7 @@ cv::Mat geodesic_dilation(cv::Mat I, cv::Mat J){
     std::vector<std::vector<int>> matrix_I = mat2vector(I);
     std::vector<std::vector<int>> matrix_J = mat2vector(J);
     std::vector<std::vector<int>> matrix_aux = matrix_I;
-    std::vector <int> list;
+    std::vector <int> list_1, list_2;
 
     cv::Mat mat_aux;
     cv::Mat dif;
@@ -177,21 +177,19 @@ cv::Mat geodesic_dilation(cv::Mat I, cv::Mat J){
 
         for(int j = 1; j < I.rows; j++){
             for(int i = 1; i < I.cols-1; i++){
-
-                list = { matrix_J[j-1][i-1], matrix_J[j-1][i], matrix_J[j-1][i+1],
+                list_1 = { matrix_J[j-1][i-1], matrix_J[j-1][i], matrix_J[j-1][i+1],
                          matrix_J[j][i-1],   matrix_J[j][i]};
-                auto max_ptr = std::max_element(std::begin(list), std::end(list));
-                matrix_J[j][i] = std::min(*max_ptr, matrix_I[j][i]);
+                auto max_ptr_1 = std::max_element(std::begin(list_1), std::end(list_1));
+                matrix_J[j][i] = std::min(*max_ptr_1, matrix_I[j][i]);
             }
         }
 
-        for(int j = I.rows-2; j == -1 ; j--){
-            for(int i = I.cols-2; i == 0; i--){
-
-                list = {                    matrix_J[j][i],    matrix_J[j][i+1],
+        for(int j = I.rows-2; j >= 0 ; j--){
+            for(int i = I.cols-2; i >= 1; i--){
+                list_2 = {                    matrix_J[j][i],    matrix_J[j][i+1],
                         matrix_J[j+1][i-1], matrix_J[j+1][i],  matrix_J[j+1][i+1]};
-                auto max_ptr = std::max_element(std::begin(list), std::end(list));
-                matrix_J[j][i] = std::min(*max_ptr, matrix_I[j][i]);
+                auto max_ptr_2 = std::max_element(std::begin(list_2), std::end(list_2));
+                matrix_J[j][i] = std::min(*max_ptr_2, matrix_I[j][i]);
             }
         }
 
@@ -207,7 +205,7 @@ cv::Mat geodesic_dilation(cv::Mat I, cv::Mat J){
         }
     }
 
-    J = vector2mat(matrix_J);
+    //J = vector2mat(matrix_J);
 
     return J;
 }
