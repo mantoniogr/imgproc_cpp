@@ -15,20 +15,20 @@ int main(){
    cv::Mat src;
 
    std::cout << "Paper 3 Application" << "\n";
-   src = cv::imread("images/objetos.bmp", 1);
+   src = cv::imread("images/Lena.png", 1);
    src = rgb2gray(src);
 
    if(!src.data){
       std::cout << "Error...\n";
    }
 
-   cv::Mat filtered = geodesic_dilation(src, erosion(src,7));
+   cv::Mat filtered = maxima(src);
 
    cv::namedWindow("Original", CV_WINDOW_AUTOSIZE);
    cv::imshow("Original", src);
-
    cv::namedWindow("Filtered", CV_WINDOW_AUTOSIZE);
    cv::imshow("Filtered", filtered);
+   //cv::imwrite("opening-3.png", filtered);
 
    cv::waitKey();
 

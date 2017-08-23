@@ -65,7 +65,8 @@ cv::Mat threshold(cv::Mat image, int th){
   for (int j = 0; j < img.rows; ++j){
     pixel = img.ptr<uchar>(j);
     for (int i = 0; i < img.cols; ++i){
-      if(pixel[i] > th){
+
+      if(pixel[i] >= th){
         pixel[i] = 255;
       }
       else{
@@ -84,7 +85,7 @@ cv::Mat threshold(cv::Mat image, int th1, int th2){
   for (int j = 0; j < img.rows; ++j){
     pixel = img.ptr<uchar>(j);
     for (int i = 0; i < img.cols; ++i){
-      if((pixel[i] > th1) && (th2 > pixel[i])){
+      if((pixel[i] >= th1) && (pixel[i] <= th2)){
         pixel[i] = 255;
       }
       else{
