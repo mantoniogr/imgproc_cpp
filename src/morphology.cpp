@@ -383,7 +383,7 @@ cv::Mat geodesic_dilationM(cv::Mat I, cv::Mat J){
                 list_1 = { matrix_J[j-1][i-1], matrix_J[j-1][i], matrix_J[j-1][i+1],
                          matrix_J[j][i-1],   matrix_J[j][i]};
                 auto max_ptr_1 = std::max_element(std::begin(list_1), std::end(list_1));
-                matrix_J[j][i] = min_no_zero(*max_ptr_1, matrix_I[j][i]);
+                matrix_J[j][i] = min_no_zero({*max_ptr_1, matrix_I[j][i]});
             }
         }
 
@@ -392,7 +392,7 @@ cv::Mat geodesic_dilationM(cv::Mat I, cv::Mat J){
                 list_2 = {                    matrix_J[j][i],    matrix_J[j][i+1],
                         matrix_J[j+1][i-1], matrix_J[j+1][i],  matrix_J[j+1][i+1]};
                 auto max_ptr_2 = std::max_element(std::begin(list_2), std::end(list_2));
-                matrix_J[j][i] = min_no_zero(*max_ptr_2, matrix_I[j][i]);
+                matrix_J[j][i] = min_no_zero({*max_ptr_2, matrix_I[j][i]});
             }
         }
 
@@ -409,6 +409,43 @@ cv::Mat geodesic_dilationM(cv::Mat I, cv::Mat J){
     }
 
     return J;
+}
+
+cv::Mat geodesic_erosionM(cv::Mat I, cv::Mat J){
+
+  I = negative_gray(I);
+  J = negative_gray(J);
+
+  J = geodesic_dilationM(I, J);
+
+  I = negative_gray(I);
+  J = negative_gray(J);
+
+  return J;
+}
+
+cv::Mat closing_by_reconstructionM(cv::Mat image, int lambda){
+  cv::Mat mat_aux = image.clone();
+  cv::Mat Y = image.clone();
+  cv::Mat dilated = image.clone();
+  cv::Mat J;
+
+  Y = dilation(image, lambda);
+  J = geodesic_erosionM(mat_aux, Y);
+
+  return J;
+}
+
+cv::Mat opening_by_reconstructionM(cv::Mat image, int lambda){
+  cv::Mat mat_aux = image.clone();
+  cv::Mat Y = image.clone();
+  cv::Mat eroded = image.clone();
+  cv::Mat J;
+
+  Y = erosion(image, lambda);
+  J = geodesic_dilationM(mat_aux, Y);
+
+  return J;
 }
 
 // Modified Closing by Reconstruction - End
