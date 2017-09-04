@@ -448,4 +448,12 @@ cv::Mat opening_by_reconstructionM(cv::Mat image, int lambda){
   return J;
 }
 
+cv::Mat mcbr(cv::Mat image){
+  cv::Mat mat_aux = image.clone();
+
+  mat_aux = closing(image, 1);
+
+  return mat_aux;
+}
+
 // Modified Closing by Reconstruction - End

@@ -39,5 +39,6 @@ cv::Mat geodesic_dilationM(cv::Mat I, cv::Mat J);
 cv::Mat geodesic_erosionM(cv::Mat I, cv::Mat J);
 cv::Mat opening_by_reconstructionM(cv::Mat image, int lambda);
 cv::Mat closing_by_reconstructionM(cv::Mat image, int lambda);
+cv::Mat mcbr(cv::Mat image);
 
 #endif /* morphology_h */
