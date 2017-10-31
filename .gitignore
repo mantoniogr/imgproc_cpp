@@ -12,6 +12,3 @@ executable
 
 # Mac
 .DS_Store
-
-#Folders
-images/

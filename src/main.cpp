@@ -10,19 +10,20 @@
 #include <opencv2/highgui/highgui.hpp>
 #include "functions.h"
 #include "morphology.h"
+#include "mcbr.h"
 
 int main(){
    cv::Mat src;
 
    std::cout << "Paper 3 Application" << "\n";
-   src = cv::imread("images/Lena.png", 1);
+   src = cv::imread("images/disp2.png", 1);
    src = rgb2gray(src);
 
    if(!src.data){
       std::cout << "Error...\n";
    }
 
-   cv::Mat filtered = maxima(src);
+   cv::Mat filtered = mcbr(src);
 
    cv::namedWindow("Original", CV_WINDOW_AUTOSIZE);
    cv::imshow("Original", src);
