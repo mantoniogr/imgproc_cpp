@@ -16,14 +16,15 @@ int main(){
    cv::Mat src;
 
    std::cout << "Paper 3 Application" << "\n";
-   src = cv::imread("images/disp2.png", 1);
+   src = cv::imread("images/objetos.bmp", 1);
    src = rgb2gray(src);
+   src = threshold(src, 127);
 
    if(!src.data){
       std::cout << "Error...\n";
    }
 
-   cv::Mat filtered = mcbr(src);
+   cv::Mat filtered = labeling(src, 10);
 
    cv::namedWindow("Original", CV_WINDOW_AUTOSIZE);
    cv::imshow("Original", src);

@@ -11,6 +11,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include "morphology.h"
 #include "functions.h"
+#include <queue>
 
 cv::Mat dilation(cv::Mat image, int lambda){
   cv::Mat img = image.clone();
@@ -297,4 +298,61 @@ cv::Mat minima(cv::Mat image){
   img = maxima(img);
 
   return img;
+}
+
+cv::Mat labeling(cv::Mat image, int increment){
+    cv::Mat mat_aux;
+
+    std::vector<std::vector<int>> matrix = mat2vector(image);
+    std::vector<std::vector<int>> matrix_aux = mat2vector(image);
+
+    std::vector<int> coords = {0,0}; // j,i
+    std::vector<int> primas = {0,0}; // j,i
+
+    int k = 0;
+    std::queue <std::vector<int>> fifo;
+
+    for(int j = 0; j < image.rows; j++){
+        for(int i = 0; i < image.cols; i++){
+            if(matrix_aux[j][i] != 0){
+                k += increment;
+
+                coords[0] = j;
+                coords[1] = i;
+
+                fifo.push(coords);
+
+                matrix_aux[j][i] = 0;
+                matrix[j][i] = k;
+
+                while(!fifo.empty()){
+                    primas = fifo.front();
+                    fifo.pop();
+                    for(int n = primas[0]-1; n < primas[0]+2; n++){
+                        for(int m = primas[1]-1; m < primas[1]+2; m++){
+                            if(matrix_aux[n][m] != 0){
+                                coords[0] = n;
+                                coords[1] = m;
+                                fifo.push(coords);
+                                matrix_aux[n][m] = 0;
+                                matrix[n][m] = k;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    mat_aux = vector2mat(matrix);
+
+    return mat_aux;
+}
+
+cv::Mat watershed(cv::Mat image){
+    cv::Mat ims = image.clone(); // watershed
+    cv::Mat mask = minima(image); // minimos de image
+    cv::Mat imwl = labeling(mask, 1); // vertientes
+
+    return ims;
 }
