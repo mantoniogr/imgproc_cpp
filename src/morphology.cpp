@@ -314,6 +314,19 @@ cv::Mat labeling(cv::Mat image, int increment){
 
     for(int j = 0; j < image.rows; j++){
         for(int i = 0; i < image.cols; i++){
+            if(i == 0){
+                matrix_aux[j][i] = 0;}
+            if(j == 0){
+                matrix_aux[j][i] = 0;}
+            if(i == image.cols-1){
+                matrix_aux[j][i] = 0;}
+            if(j == image.rows-1){
+                matrix_aux[j][i] = 0;}
+        }
+    }
+
+    for(int j = 0; j < image.rows; j++){
+        for(int i = 0; i < image.cols; i++){
             if(matrix_aux[j][i] != 0){
                 k += increment;
 
@@ -350,9 +363,74 @@ cv::Mat labeling(cv::Mat image, int increment){
 }
 
 cv::Mat watershed(cv::Mat image){
-    cv::Mat ims = image.clone(); // watershed
+    cv::Mat mat_aux;
+    //cv::Mat ims = image.clone(); // watershed
     cv::Mat mask = minima(image); // minimos de image
     cv::Mat imwl = labeling(mask, 1); // vertientes
 
-    return ims;
+    std::vector<std::vector<int>> matrix_imwl = mat2vector(imwl); // vertientes matrix
+    std::vector<std::vector<int>> ime = mat2vector(image); // vertientes matrix
+    std::vector<std::vector<int>> ims = mat2vector(image); // vertientes matrix
+
+    for(int j = 0; j < image.rows; j++){
+        for(int i = 0; i < image.cols; i++){
+            if(i == 0){
+                matrix_imwl[j][i] = 1000000;}
+            if(j == 0){
+                matrix_imwl[j][i] = 1000000;}
+            if(i == image.cols-1){
+                matrix_imwl[j][i] = 1000000;}
+            if(j == image.rows-1){
+                matrix_imwl[j][i] = 1000000;}
+        }
+    }
+
+    std::vector<std::queue<std::vector<int>>> fifoj (256);
+    std::vector<int> coords = {0,0}; // j,i
+
+    for(int j = 1; j < image.rows-1; j++){
+        for(int i = 1; i < image.cols-1; i++){
+            if(matrix_imwl[j][i] != 0){
+                int ban_ = 255;
+                for(int k = j-1; k < j+2; k++){
+                    for(int l = i-1; l < i+2; l++){
+                        ban_ = ban_ & matrix_imwl[k][l];
+                    }
+                }
+                if(ban_ == 0){
+                    coords[0] = j;
+                    coords[1] = i;
+                    fifoj[ime[j][i]].push(coords);
+                }
+            }
+        }
+    }
+
+    int i = 0;
+    while(i != 256){
+        while(!fifoj[i].empty()){
+            coords = fifoj[i].front();
+            fifoj[i].pop();
+            for(int k = coords[0]-1; k < coords[0]+2; k++){
+                for(int l = coords[1]-1; l < coords[1]+2; l++){
+                    if(matrix_imwl[k][l] == 0){
+                        for(int n = k-1; n < k+2; n++){
+                            for(int m = l-1; m < l+2; m++){
+                                if( matrix_imwl[n][m] != matrix_imwl[coords[0]][coords[1]] && matrix_imwl[n][m] != 0 && matrix_imwl[n][m] != 1000000){
+                                    ims[k][l] = 255;
+                                }
+                                matrix_imwl[k][l] = matrix_imwl[coords[0]][coords[1]];
+                                fifoj[ime[k][l]].push({k,l});
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        i++;
+    }
+
+    mat_aux = vector2mat(matrix_imwl);
+
+    return mat_aux;
 }
