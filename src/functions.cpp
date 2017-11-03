@@ -139,3 +139,25 @@ cv::Mat vector2mat(std::vector<std::vector<int>> vector){
   }
   return image;
 }
+
+cv::Mat borders_change(cv::Mat image, int value){
+    cv::Mat mat;
+    std::vector<std::vector<int>> matrix = mat2vector(image);
+
+    for(int j = 0; j < image.rows; j++){
+        for(int i = 0; i < image.cols; i++){
+            if(i == 0){
+                matrix[j][i] = value;}
+            if(j == 0){
+                matrix[j][i] = value;}
+            if(i == image.cols-1){
+                matrix[j][i] = value;}
+            if(j == image.rows-1){
+                matrix[j][i] = value;}
+        }
+    }
+
+    mat = vector2mat(matrix);
+
+    return mat;
+}

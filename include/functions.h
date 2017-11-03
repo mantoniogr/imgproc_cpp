@@ -19,4 +19,6 @@ cv::Mat difference(cv::Mat image1, cv::Mat image2);
 std::vector<std::vector<int>> mat2vector(cv::Mat image);
 cv::Mat vector2mat(std::vector<std::vector<int>> vector);
 
+cv::Mat borders_change(cv::Mat image, int value);
+
 #endif /* functions_h */

@@ -304,6 +304,8 @@ cv::Mat labeling(cv::Mat image, int increment){
     cv::Mat mat_aux;
 
     std::vector<std::vector<int>> matrix = mat2vector(image);
+
+    image = borders_change(image, 0);
     std::vector<std::vector<int>> matrix_aux = mat2vector(image);
 
     std::vector<int> coords = {0,0}; // j,i
@@ -311,19 +313,6 @@ cv::Mat labeling(cv::Mat image, int increment){
 
     int k = 0;
     std::queue <std::vector<int>> fifo;
-
-    for(int j = 0; j < image.rows; j++){
-        for(int i = 0; i < image.cols; i++){
-            if(i == 0){
-                matrix_aux[j][i] = 0;}
-            if(j == 0){
-                matrix_aux[j][i] = 0;}
-            if(i == image.cols-1){
-                matrix_aux[j][i] = 0;}
-            if(j == image.rows-1){
-                matrix_aux[j][i] = 0;}
-        }
-    }
 
     for(int j = 0; j < image.rows; j++){
         for(int i = 0; i < image.cols; i++){
@@ -364,26 +353,14 @@ cv::Mat labeling(cv::Mat image, int increment){
 
 cv::Mat watershed(cv::Mat image){
     cv::Mat mat_aux;
-    //cv::Mat ims = image.clone(); // watershed
     cv::Mat mask = minima(image); // minimos de image
     cv::Mat imwl = labeling(mask, 1); // vertientes
 
+    imwl = borders_change(imwl, 1000000);
+
     std::vector<std::vector<int>> matrix_imwl = mat2vector(imwl); // vertientes matrix
     std::vector<std::vector<int>> ime = mat2vector(image); // vertientes matrix
-    std::vector<std::vector<int>> ims = mat2vector(image); // vertientes matrix
-
-    for(int j = 0; j < image.rows; j++){
-        for(int i = 0; i < image.cols; i++){
-            if(i == 0){
-                matrix_imwl[j][i] = 1000000;}
-            if(j == 0){
-                matrix_imwl[j][i] = 1000000;}
-            if(i == image.cols-1){
-                matrix_imwl[j][i] = 1000000;}
-            if(j == image.rows-1){
-                matrix_imwl[j][i] = 1000000;}
-        }
-    }
+    std::vector<std::vector<int>> ims = mat2vector(image); // watershed matrix
 
     std::vector<std::queue<std::vector<int>>> fifoj (256);
     std::vector<int> coords = {0,0}; // j,i
