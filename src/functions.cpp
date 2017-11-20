@@ -11,24 +11,6 @@
 #include <opencv2/highgui/highgui.hpp>
 #include "functions.h"
 
-cv::Mat rgb2gray(cv::Mat image){
-  cv::Mat img = cv::Mat::zeros(image.rows, image.cols, CV_8UC1);
-  uchar gray;
-  uchar* pixel;
-
-  for (int j = 0; j < img.rows; ++j){
-    cv::Vec3b* pixel_rgb = image.ptr<cv::Vec3b>(j);
-    pixel = img.ptr<uchar>(j);
-    for (int i = 0; i < img.cols; ++i){
-      gray = 0.299*pixel_rgb[i][2] + 0.587*pixel_rgb[i][1] +
-              0.114*pixel_rgb[i][0];
-      pixel[i] = gray;
-    }
-  }
-
-  return img;
-}
-
 cv::Mat negative_gray(cv::Mat image){
   cv::Mat img = image.clone();
   uchar* pixel;
@@ -37,21 +19,6 @@ cv::Mat negative_gray(cv::Mat image){
     pixel = img.ptr<uchar>(j);
     for (int i = 0; i < img.cols; ++i){
       pixel[i] = 255 - pixel[i];
-    }
-  }
-
-  return img;
-}
-
-cv::Mat negative_color(cv::Mat image){
-  cv::Mat img = image.clone();
-
-  for (int j = 0; j < img.rows; ++j){
-    cv::Vec3b* pixel_rgb = img.ptr<cv::Vec3b>(j);
-    for (int i = 0; i < img.cols; ++i){
-      pixel_rgb[i][2] = 255 - pixel_rgb[i][2];
-      pixel_rgb[i][1] = 255 - pixel_rgb[i][1];
-      pixel_rgb[i][0] = 255 - pixel_rgb[i][0];
     }
   }
 

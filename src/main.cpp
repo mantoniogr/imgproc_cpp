@@ -9,6 +9,7 @@
 #include <iostream>
 #include <opencv2/highgui/highgui.hpp>
 #include "functions.h"
+#include "color.h"
 #include "morphology.h"
 #include "mcbr.h"
 
@@ -16,23 +17,27 @@ int main(){
    cv::Mat src;
 
    std::cout << "Paper 3 Application" << "\n";
-   src = cv::imread("images/lena.png", 1);
-   src = rgb2gray(src);
+   src = cv::imread("images/im2.png", 1);
+   //src = rgb2gray(src);
    //src = threshold(src, 127);
 
    if(!src.data){
       std::cout << "Error...\n";
    }
 
-   cv::Mat filtered = watershed(src);
+   //std::vector<cv::Mat> filtered = rgb2ihsl(src);
+   //std::vector<cv::Mat> histograms = bivariable_histograms(filtered);
 
-   cv::namedWindow("Original", CV_WINDOW_AUTOSIZE);
-   cv::imshow("Original", src);
-   cv::namedWindow("Filtered", CV_WINDOW_AUTOSIZE);
-   cv::imshow("Filtered", filtered);
-   //cv::imwrite("opening-3.png", filtered);
+   std::vector<cv::Mat> filtered = colorSegmentation(src);
 
-   cv::waitKey();
+   // cv::namedWindow("Original", CV_WINDOW_AUTOSIZE);
+   // cv::imshow("Original", src);
+   // cv::namedWindow("Filtered", CV_WINDOW_AUTOSIZE);
+   // cv::imshow("Filtered", filtered[1]);
+
+   cv::imwrite("ls.png", filtered[1]);
+
+   // cv::waitKey();
 
    return 0;
 }

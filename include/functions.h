@@ -9,9 +9,7 @@
 #ifndef FUNCTIONS_H_INCLUDED
 #define FUNCTIONS_H_INCLUDED
 
-cv::Mat rgb2gray(cv::Mat image);
 cv::Mat negative_gray(cv::Mat image);
-cv::Mat negative_color(cv::Mat image);
 cv::Mat threshold(cv::Mat image, int th);
 cv::Mat threshold(cv::Mat image, int th1, int th2);
 cv::Mat difference(cv::Mat image1, cv::Mat image2);

@@ -301,12 +301,11 @@ cv::Mat minima(cv::Mat image){
 }
 
 cv::Mat labeling(cv::Mat image, int increment){
-    cv::Mat mat_aux;
-
     std::vector<std::vector<int>> matrix = mat2vector(image);
 
-    image = borders_change(image, 0);
-    std::vector<std::vector<int>> matrix_aux = mat2vector(image);
+    cv::Mat mat_aux = image.clone();
+    mat_aux = borders_change(mat_aux, 0);
+    std::vector<std::vector<int>> matrix_aux = mat2vector(mat_aux);
 
     std::vector<int> coords = {0,0}; // j,i
     std::vector<int> primas = {0,0}; // j,i
@@ -375,9 +374,7 @@ cv::Mat watershed(cv::Mat image){
                     }
                 }
                 if(ban_ == 0){
-                    coords[0] = j;
-                    coords[1] = i;
-                    fifoj[ime[j][i]].push(coords);
+                    fifoj[ime[j][i]].push({j,i});
                 }
             }
         }
@@ -410,4 +407,127 @@ cv::Mat watershed(cv::Mat image){
     mat_aux = vector2mat(matrix_imwl);
 
     return mat_aux;
+}
+
+cv::Mat watershed(cv::Mat image, cv::Mat marker){
+    cv::Mat mat_aux;
+    //cv::Mat mask = minima(image); // minimos de image
+    cv::Mat imwl = labeling(marker, 1); // vertientes
+
+    imwl = borders_change(imwl, 1000000);
+
+    std::vector<std::vector<int>> matrix_imwl = mat2vector(imwl); // vertientes matrix
+    std::vector<std::vector<int>> ime = mat2vector(image); // vertientes matrix
+    std::vector<std::vector<int>> ims = mat2vector(image); // watershed matrix
+
+    std::vector<std::queue<std::vector<int>>> fifoj (256);
+    std::vector<int> coords = {0,0}; // j,i
+
+    for(int j = 1; j < image.rows-1; j++){
+        for(int i = 1; i < image.cols-1; i++){
+            if(matrix_imwl[j][i] != 0){
+                int ban_ = 255;
+                for(int k = j-1; k < j+2; k++){
+                    for(int l = i-1; l < i+2; l++){
+                        ban_ = ban_ & matrix_imwl[k][l];
+                    }
+                }
+                if(ban_ == 0){
+                    fifoj[ime[j][i]].push({j,i});
+                }
+            }
+        }
+    }
+
+    int i = 0;
+    while(i != 256){
+        while(!fifoj[i].empty()){
+            coords = fifoj[i].front();
+            fifoj[i].pop();
+            for(int k = coords[0]-1; k < coords[0]+2; k++){
+                for(int l = coords[1]-1; l < coords[1]+2; l++){
+                    if(matrix_imwl[k][l] == 0){
+                        for(int n = k-1; n < k+2; n++){
+                            for(int m = l-1; m < l+2; m++){
+                                if( matrix_imwl[n][m] != matrix_imwl[coords[0]][coords[1]] && matrix_imwl[n][m] != 0 && matrix_imwl[n][m] != 1000000){
+                                    ims[k][l] = 255;
+                                }
+                                matrix_imwl[k][l] = matrix_imwl[coords[0]][coords[1]];
+                                fifoj[ime[k][l]].push({k,l});
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        i++;
+    }
+
+    mat_aux = vector2mat(ims);
+
+    return mat_aux;
+}
+
+std::vector<cv::Mat> watershed(cv::Mat image, cv::Mat marker, cv::Mat dst){
+    std::vector<cv::Mat> w_vector;
+    cv::Mat mat_aux, mat_aux2;
+    //cv::Mat mask = minima(image); // minimos de image
+    cv::Mat imwl = labeling(marker, 1); // vertientes
+
+    imwl = borders_change(imwl, 0);
+
+    std::vector<std::vector<int>> matrix_imwl = mat2vector(imwl); // vertientes matrix
+    std::vector<std::vector<int>> ime = mat2vector(image); // vertientes matrix
+    std::vector<std::vector<int>> ims = mat2vector(dst); // watershed matrix
+
+    std::vector<std::queue<std::vector<int>>> fifoj (256);
+    std::vector<int> coords = {0,0}; // j,i
+
+    for(int j = 1; j < image.rows-1; j++){
+        for(int i = 1; i < image.cols-1; i++){
+            if(matrix_imwl[j][i] != 0){
+                int ban_ = 255;
+                for(int k = j-1; k < j+2; k++){
+                    for(int l = i-1; l < i+2; l++){
+                        ban_ = ban_ & matrix_imwl[k][l];
+                    }
+                }
+                if(ban_ == 0){
+                    fifoj[ime[j][i]].push({j,i});
+                }
+            }
+        }
+    }
+
+    int i = 0;
+    while(i != 256){
+        while(!fifoj[i].empty()){
+            coords = fifoj[i].front();
+            fifoj[i].pop();
+            for(int k = coords[0]-1; k < coords[0]+2; k++){
+                for(int l = coords[1]-1; l < coords[1]+2; l++){
+                    if(l < image.cols && k < image.rows && l > -1 && k > -1 && matrix_imwl[k][l] == 0){
+                        for(int n = k-1; n < k+2; n++){
+                            for(int m = l-1; m < l+2; m++){
+                                if(m < image.cols && n < image.rows && m > -1 && n > -1 && (matrix_imwl[n][m] != matrix_imwl[coords[0]][coords[1]]) && (matrix_imwl[n][m] != 0) && (matrix_imwl[n][m] != 1000000)){
+                                    ims[k][l] = 255;
+                                }
+                                matrix_imwl[k][l] = matrix_imwl[coords[0]][coords[1]];
+                                fifoj[ime[k][l]].push({k,l});
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        i++;
+    }
+
+    mat_aux = vector2mat(ims);
+    mat_aux2 = vector2mat(matrix_imwl);
+
+    w_vector.push_back(mat_aux);
+    w_vector.push_back(mat_aux2);
+
+    return w_vector;
 }

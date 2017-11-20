@@ -32,6 +32,9 @@ cv::Mat sequential_reconstruction2(cv::Mat image, int lambda);
 cv::Mat maxima(cv::Mat image);
 cv::Mat minima(cv::Mat image);
 cv::Mat labeling(cv::Mat image, int increment);
+
 cv::Mat watershed(cv::Mat image);
+cv::Mat watershed(cv::Mat image, cv::Mat marker);
+std::vector<cv::Mat> watershed(cv::Mat ime, cv::Mat minimos, cv::Mat original);
 
 #endif /* morphology_h */
