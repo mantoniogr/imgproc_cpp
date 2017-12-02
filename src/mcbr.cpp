@@ -166,22 +166,137 @@ cv::Mat mcbr(cv::Mat image){
     size = 1;
 
     noise = noise_counter(image);
-    std::cout << noise << std::endl;
+    // std::cout << noise << std::endl;
 
     mat_aux = closing(image, 1);
 
     noise = noise_counter(mat_aux);
-    std::cout << noise << std::endl;
+    // std::cout << noise << std::endl;
 
     while(noise != 0){
         mat_aux = closing_by_reconstructionM(mat_aux, size);
         filtered = comparator(mat_aux, filtered);
 
         noise = noise_counter(mat_aux);
-        std::cout << noise << std::endl;
+        // std::cout << noise << std::endl;
 
         size += 1;
     }
+
+    return mat_aux;
+}
+
+cv::Mat full_inpainting(cv::Mat depth_map, cv::Mat color){
+    cv::Mat mat_aux = depth_map.clone();
+
+    cv::Mat clos_1 = closing(depth_map, 1);
+    cv::Mat mcbr_fil = mcbr(depth_map);
+
+    cv::Mat holes = hole_id(clos_1);
+    cv::Mat holes_problems = noise_classificator(holes, mcbr_fil);
+
+    return holes_problems;
+}
+
+std::vector<cv::Mat> isolation(cv::Mat holes_problems, cv::Mat depth, cv::Mat color){
+    // Mark holes with problems in different gray level
+
+    // For each gray level, do a threshold
+
+    // 
+
+    return {};
+}
+
+cv::Mat noise_classificator(cv::Mat image, cv::Mat depth_mcbr){
+    double min, max;
+    cv::minMaxLoc(image, &min, &max);
+
+    // int max_value = max_gray_value();
+    cv::Mat hole_n;
+    cv::Mat external;
+    cv::Mat internal;
+
+    std::vector<std::vector<int>> external_mat;
+    std::vector<std::vector<int>> internal_mat;
+
+    std::vector<std::vector<int>> mcbr_mat = mat2vector(depth_mcbr);
+    std::vector<std::vector<int>> holes_marked = mat2vector(image);
+    std::vector<std::vector<int>> holes_gray;// = mat2vector(image);
+    holes_gray.resize(image.rows, std::vector<int>(image.cols, 0));
+
+    std::vector<int> list;
+
+    for(int n = 1; n < max+1; n++){
+        double acc1 = 0;
+        double acc2 = 0;
+
+        double k = 0;
+        double l = 0;
+
+        hole_n = threshold(image, n, n);
+
+        external = external_gradient(hole_n, 1);
+        internal = internal_gradient(hole_n, 1);
+
+        external_mat = mat2vector(external);
+        internal_mat = mat2vector(internal);
+
+        for(int j = 0; j < depth_mcbr.rows; j++){
+            for(int i = 0; i < depth_mcbr.cols; i++){
+                if(external_mat[j][i] == 255){
+                    acc1 = acc1 + mcbr_mat[j+1][i+1];
+                    k++;
+                }
+                if(internal_mat[j][i] == 255){
+                    acc2 = acc2 + mcbr_mat[j+1][i+1];
+                    l++;
+                }
+            }
+        }
+
+        if(abs((acc1/k) - (acc2/l)) <= 1){
+            list.push_back(n);
+        }
+    }
+
+    int m;
+
+    for(std::vector<int>::iterator it = list.begin(); it != list.end(); ++it){
+        m = *it;
+        std::cout << m << std::endl;
+        for(int j = 0; j < image.rows; j++){
+            for(int i = 0; i < image.cols; i++){
+                if(holes_marked[j][i] == m){
+                    holes_gray[j][i] = 255;
+                }
+            }
+        }
+    }
+
+    cv::Mat holes_2fill = vector2mat(holes_gray);
+
+    return holes_2fill;
+}
+
+cv::Mat hole_id(cv::Mat image){
+    cv::Mat mat_aux = image.clone();
+    std::vector<std::vector<int>> matrix = mat2vector(image);
+
+    for(int j = 0; j < image.rows; j++){
+        for(int i = 0; i < image.cols; i++){
+            if(matrix[j][i] == 0){
+                matrix[j][i] = 255;
+            }else{
+                matrix[j][i] = 0;
+            }
+        }
+    }
+
+    mat_aux = vector2mat(matrix);
+    mat_aux = borders_adding(mat_aux, 0);
+    mat_aux = labeling(mat_aux, 1);
+    // mat_aux = borders_removal(mat_aux);
 
     return mat_aux;
 }

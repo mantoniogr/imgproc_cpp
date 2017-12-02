@@ -18,5 +18,11 @@ cv::Mat geodesic_erosionM(cv::Mat I, cv::Mat J);
 cv::Mat opening_by_reconstructionM(cv::Mat image, int lambda);
 cv::Mat closing_by_reconstructionM(cv::Mat image, int lambda);
 cv::Mat mcbr(cv::Mat image);
+cv::Mat full_inpainting(cv::Mat depth_map, cv::Mat color);
+
+cv::Mat noise_classificator(cv::Mat image, cv::Mat depth_mcbr);
+cv::Mat hole_id(cv::Mat image);
+
+std::vector<cv::Mat> isolation(cv::Mat holes_problems, cv::Mat depth, cv::Mat color);
 
 #endif /* mcbr_h */

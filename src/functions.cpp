@@ -128,3 +128,37 @@ cv::Mat borders_change(cv::Mat image, int value){
 
     return mat;
 }
+
+cv::Mat borders_adding(cv::Mat image, int value){
+    cv::Mat mat;
+    std::vector<std::vector<int>> matrix;
+    std::vector<std::vector<int>> mat_aux = mat2vector(image);
+    matrix.resize(image.rows+2, std::vector<int>(image.cols+2, value));
+
+    for(int j = 0; j < image.rows; j++){
+        for(int i = 0; i < image.cols; i++){
+            matrix[j+1][i+1] = mat_aux[j][i];
+        }
+    }
+
+    mat = vector2mat(matrix);
+
+    return mat;
+}
+
+cv::Mat borders_removal(cv::Mat image){
+    cv::Mat mat;
+    std::vector<std::vector<int>> matrix;
+    std::vector<std::vector<int>> mat_aux = mat2vector(image);
+    matrix.resize(image.rows-2, std::vector<int>(image.cols-2, 0));
+
+    for(int j = 1; j < image.rows-1; j++){
+        for(int i = 1; i < image.cols-1; i++){
+            matrix[j-1][i-1] = mat_aux[j][i];
+        }
+    }
+
+    mat = vector2mat(matrix);
+
+    return mat;
+}

@@ -230,9 +230,9 @@ std::vector<cv::Mat> colorSegmentation(cv::Mat color_image){
     minima_ls = borders_change(minima_ls, 0);
     std::vector<cv::Mat> watershed_ls = watershed(alternado_ls, minima_ls, imgD);
 
+    std::vector<std::vector<int>> l = mat2vector(filtered[2]);
     std::vector<std::vector<int>> s = mat2vector(filtered[1]);
     std::vector<std::vector<int>> h = mat2vector(filtered[0]);
-    std::vector<std::vector<int>> l = mat2vector(filtered[2]);
 
     std::vector<std::vector<int>> w_ls = mat2vector(watershed_ls[1]);
     std::vector<std::vector<int>> w_hs = mat2vector(watershed_hs[1]);
@@ -287,10 +287,10 @@ cv::Mat colorAsignation(cv::Mat image_color, cv::Mat image_segmented){
         }
     }
 
-    std::vector<int> levels_r(max_gray,0);
-    std::vector<int> levels_g(max_gray,0);
-    std::vector<int> levels_b(max_gray,0);
-    std::vector<int> counter(max_gray,0);
+    std::vector<int> levels_r(max_gray+1,0);
+    std::vector<int> levels_g(max_gray+1,0);
+    std::vector<int> levels_b(max_gray+1,0);
+    std::vector<int> counter(max_gray+1,0);
 
     for(int j = 0; j < image_segmented.rows; j++){
         for(int i = 0; i < image_segmented.cols; i++){
@@ -302,7 +302,7 @@ cv::Mat colorAsignation(cv::Mat image_color, cv::Mat image_segmented){
         }
     }
 
-    for(int k = 0; k < max_gray; k++){
+    for(int k = 0; k < max_gray+1; k++){
         levels_r[k] = int(float(levels_r[k]) / float(counter[k]));
         levels_g[k] = int(float(levels_g[k]) / float(counter[k]));
         levels_b[k] = int(float(levels_b[k]) / float(counter[k]));

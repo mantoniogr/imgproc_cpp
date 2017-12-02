@@ -18,5 +18,9 @@ std::vector<std::vector<int>> mat2vector(cv::Mat image);
 cv::Mat vector2mat(std::vector<std::vector<int>> vector);
 
 cv::Mat borders_change(cv::Mat image, int value);
+cv::Mat borders_adding(cv::Mat image, int value);
+cv::Mat borders_removal(cv::Mat image);
+
+int max_gray_value(cv::Mat image);
 
 #endif /* functions_h */
