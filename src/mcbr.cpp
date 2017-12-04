@@ -193,19 +193,73 @@ cv::Mat full_inpainting(cv::Mat depth_map, cv::Mat color){
     cv::Mat mcbr_fil = mcbr(depth_map);
 
     cv::Mat holes = hole_id(clos_1);
+    // cv::imwrite("closing.png", clos_1);
     cv::Mat holes_problems = noise_classificator(holes, mcbr_fil);
+    std::vector<cv::Mat> templates_d = isolation(holes_problems, depth_map);
+    std::vector<cv::Mat> templates_c = isolation(holes_problems, color);
 
-    return holes_problems;
+
+
+    return templates_c[1];
 }
 
-std::vector<cv::Mat> isolation(cv::Mat holes_problems, cv::Mat depth, cv::Mat color){
+std::vector<cv::Mat> isolation(cv::Mat holes_problems, cv::Mat image){
+    std::vector<cv::Mat> templates;
+
     // Mark holes with problems in different gray level
+    cv::Mat labelled = labeling(holes_problems, 1);
 
     // For each gray level, do a threshold
+    double min, max;
+    cv::minMaxLoc(labelled, &min, &max);
 
-    // 
+    cv::Mat hole_n;
+    std::vector<std::vector<int>> hole_n_mat;
 
-    return {};
+    cv::Mat current_template;
+
+    int min_x, min_y;
+    int max_x, max_y;
+
+    for(int n = 1; n <= max; n++){
+        hole_n = threshold(labelled, n, n);
+        hole_n_mat = mat2vector(hole_n);
+
+        min_x = holes_problems.cols;
+        min_y = holes_problems.rows;
+
+        max_x = 0;
+        max_y = 0;
+
+        for(int j = 0; j < holes_problems.rows; j++){
+            for(int i = 0; i < holes_problems.cols; i++){
+                if(hole_n_mat[j][i] == 255){
+                    if(i < min_x){
+                        min_x = i;
+                    }
+                    if(i > max_x){
+                        max_x = i;
+                    }
+                    if(j < min_y){
+                        min_y = j;
+                    }
+                    if(j > max_y){
+                        max_y = j;
+                    }
+                }
+            }
+        }
+
+        // For every element segmented generate a template
+        current_template = image(cv::Rect(min_x-1, min_y-1, max_x-min_x+1, max_y-min_y+1));
+        // cv::imwrite("Template.png", current_template);
+
+        // Fill vector of templates
+        templates.push_back(current_template);
+
+    }
+
+    return templates;
 }
 
 cv::Mat noise_classificator(cv::Mat image, cv::Mat depth_mcbr){
@@ -264,7 +318,7 @@ cv::Mat noise_classificator(cv::Mat image, cv::Mat depth_mcbr){
 
     for(std::vector<int>::iterator it = list.begin(); it != list.end(); ++it){
         m = *it;
-        std::cout << m << std::endl;
+        // std::cout << m << std::endl;
         for(int j = 0; j < image.rows; j++){
             for(int i = 0; i < image.cols; i++){
                 if(holes_marked[j][i] == m){
