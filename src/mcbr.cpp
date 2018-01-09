@@ -9,6 +9,7 @@
 #include <iostream>
 #include <vector>
 #include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 #include "mcbr.h"
 #include "morphology.h"
 #include "functions.h"
@@ -193,14 +194,14 @@ cv::Mat full_inpainting(cv::Mat depth_map, cv::Mat color){
     cv::Mat mcbr_fil = mcbr(depth_map);
 
     cv::Mat holes = hole_id(clos_1);
-    // cv::imwrite("closing.png", clos_1);
     cv::Mat holes_problems = noise_classificator(holes, mcbr_fil);
     std::vector<cv::Mat> templates_d = isolation(holes_problems, depth_map);
     std::vector<cv::Mat> templates_c = isolation(holes_problems, color);
+    cv::Mat result;
+    cv::matchTemplate(depth_map, templates_d[0], result, CV_TM_SQDIFF);
+    cv::imwrite("TemplateMatching.png", result);
 
-
-
-    return templates_c[1];
+    return templates_d[1];
 }
 
 std::vector<cv::Mat> isolation(cv::Mat holes_problems, cv::Mat image){
