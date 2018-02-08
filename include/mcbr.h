@@ -24,6 +24,7 @@ cv::Mat noise_classificator(cv::Mat image, cv::Mat depth_mcbr);
 cv::Mat hole_id(cv::Mat image);
 
 std::vector<cv::Mat> isolation(cv::Mat holes_problems, cv::Mat image);
-std::vector<int> template_matching(cv::Mat image, std::vector<cv::Mat> templates);
+std::vector<std::vector<cv::Point>> template_coords(cv::Mat holes_problems, cv::Mat image);
+std::vector<int> template_matching(cv::Mat image, std::vector<cv::Mat> templates, std::vector<std::vector<cv::Point>> template_coords);
 
 #endif /* mcbr_h */

@@ -163,16 +163,27 @@ cv::Mat borders_removal(cv::Mat image){
     return mat;
 }
 
-std::vector<cv::Point> findValue(cv::Mat image, float value){
+std::vector<cv::Point> findValue(cv::Mat image, float value, int option){
   std::vector<std::vector<int>> matrix = mat2vector(image);
   std::vector<cv::Point> points;
 
-  for(int j = 1; j < image.rows-1; j++){
-      for(int i = 1; i < image.cols-1; i++){
-          if(matrix[j][i] >= value){
-            points.push_back(cv::Point(i,j));
-          }
-      }
+  if(option == 0){
+    for(int j = 1; j < image.rows-1; j++){
+        for(int i = 1; i < image.cols-1; i++){
+            if(matrix[j][i] >= value){
+              points.push_back(cv::Point(i,j));
+            }
+        }
+    }
+  }
+  if(option == 1){
+    for(int j = 1; j < image.rows-1; j++){
+        for(int i = 1; i < image.cols-1; i++){
+            if(matrix[j][i] <= value){
+              points.push_back(cv::Point(i,j));
+            }
+        }
+    }
   }
 
   return points;

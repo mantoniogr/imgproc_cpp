@@ -9,6 +9,7 @@
 #include <iostream>
 #include <vector>
 #include <list>
+#include <math.h>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include "mcbr.h"
@@ -200,15 +201,17 @@ cv::Mat full_inpainting(cv::Mat depth_map, cv::Mat color){
     std::vector<cv::Mat> templates_d = isolation(holes_problems, depth_map);
     std::vector<cv::Mat> templates_c = isolation(holes_problems, color);
 
-    std::vector<int> matches_c = template_matching(color, templates_c);
+    std::vector<std::vector<cv::Point>> coords_c = template_coords(holes_problems, color);
+    std::vector<std::vector<cv::Point>> coords_d = template_coords(holes_problems, depth_map);
+
+    std::vector<int> matches_d = template_matching(depth_map, templates_d, coords_d);
+    // std::vector<int> matches_c = template_matching(color, templates_c, coords_c);
 
     return templates_c[1];
 }
 
-std::vector<int> template_matching(cv::Mat image, std::vector<cv::Mat> templates){
-
+std::vector<int> template_matching(cv::Mat image, std::vector<cv::Mat> templates, std::vector<std::vector<cv::Point>> template_coords){
   // Methods
-  std::vector<int> methods = {0, 1, 2, 3, 4, 5};
   /* 0: SQDIFF
      1: SQDIFF NORMED
      2: TM CCORR
@@ -216,8 +219,9 @@ std::vector<int> template_matching(cv::Mat image, std::vector<cv::Mat> templates
      4: TM COEFF
      5: TM COEFF NORMED
   */
+  std::vector<int> methods = {0, 1, 2, 3, 4, 5};
 
-  // for(std::vector<int>::iterator itm = methods.begin(); itm!=methods.end(); ++itm){
+  for(std::vector<int>::iterator itm = methods.begin(); itm!=methods.end(); ++itm){
     cv::Mat result;
     double threshold;
     double minVal;
@@ -226,32 +230,127 @@ std::vector<int> template_matching(cv::Mat image, std::vector<cv::Mat> templates
     cv::Point maxLoc;
     cv::Point matchLoc;
 
-    // cv::matchTemplate(color, templates_c[1], result, *itm);
-    cv::matchTemplate(image, templates[1], result, methods[0]);
+    cv::Mat imageAux = image.clone();
+
+    for(int j=template_coords[1][0].y; j<template_coords[1][1].y; j++){
+      for(int i=template_coords[1][0].x; i<template_coords[1][1].x; i++){
+        cv::Vec3b color = imageAux.at<cv::Vec3b>(cv::Point(i,j));
+        imageAux.at<cv::Vec3b>(cv::Point(i,j)) = 0;
+      }
+    }
+
+    cv::matchTemplate(imageAux, templates[1], result, *itm);
     cv::normalize(result, result, 0, 1, cv::NORM_MINMAX, CV_8UC1);
     cv::minMaxLoc(result, &minVal, &maxVal, &minLoc, &maxLoc);
 
-    // matchLoc = minLoc;
+    float dist = image.cols * image.rows;
+    float dist_point = 0;
+    cv::Point coords;
 
-    // if(*it <= 3){
+    if(*itm < 4){
       threshold = 0.95;
-      std::vector<cv::Point> points = findValue(result, threshold);
-      std::cout << points[0] << std::endl;
+      std::vector<cv::Point> points = findValue(result, threshold, 0);
+      for(int i = 0; i < points.size(); i++){
+        dist_point = sqrt( pow((points[i].x - template_coords[1][0].x),2) + pow((points[i].y - template_coords[1][0].y),2) );
+        if (dist_point < dist){
+          dist = dist_point;
+          coords = points[i];
+        }
+      }
+      std::cout << dist_point << std::endl;
+      std::cout << coords << std::endl;
+
+      matchLoc = maxLoc;
+    }
+    if(*itm > 3){
+      threshold = 0.05;
+      std::vector<cv::Point> points = findValue(result, threshold, 1);
+      for(int i = 0; i < points.size(); i++){
+        dist_point = sqrt( pow((points[i].x - template_coords[1][0].x),2) + pow((points[i].y - template_coords[1][0].y),2) );
+        if (dist_point < dist){
+          dist = dist_point;
+          coords = points[i];
+        }
+      }
+      std::cout << dist_point << std::endl;
+      std::cout << coords << std::endl;
+
       matchLoc = minLoc;
-    // }
-    // else{
-    //   threshold = 0.05;
-    //   matchLoc = minLoc;
-    // }
-  // }
+    }
 
-  cv::rectangle(image, matchLoc,
-    cv::Point(matchLoc.x + templates[1].cols, matchLoc.y + templates[1].rows),
-    cv::Scalar(255,255,255), 1, 8, 0);
-
-  cv::imwrite("TemplateMatching.png", result);
+    cv::rectangle(image, coords,
+      cv::Point(coords.x + templates[1].cols, coords.y + templates[1].rows),
+      cv::Scalar(255, 255, 255), 1, 8, 0);
+    cv::imwrite("TemplateMatching.png", image);
+  }
 
   return {0,0,0,0};
+}
+
+std::vector<std::vector<cv::Point>> template_coords(cv::Mat holes_problems, cv::Mat image){
+    std::vector<std::vector<cv::Point>> coords;
+
+    // Mark holes with problems in different gray level
+    cv::Mat labelled = labeling(holes_problems, 1);
+
+    // For each gray level, do a threshold
+    double min, max;
+    cv::minMaxLoc(labelled, &min, &max);
+
+    cv::Mat hole_n;
+    std::vector<std::vector<int>> hole_n_mat;
+
+    // cv::Mat current_template;
+
+    int min_x, min_y;
+    int max_x, max_y;
+
+    cv::Point p1, p2;
+
+    for(int n = 1; n <= max; n++){
+        hole_n = threshold(labelled, n, n);
+        hole_n_mat = mat2vector(hole_n);
+
+        min_x = holes_problems.cols;
+        min_y = holes_problems.rows;
+
+        max_x = 0;
+        max_y = 0;
+
+        for(int j = 0; j < holes_problems.rows; j++){
+            for(int i = 0; i < holes_problems.cols; i++){
+                if(hole_n_mat[j][i] == 255){
+                    if(i < min_x){
+                        min_x = i;
+                    }
+                    if(i > max_x){
+                        max_x = i;
+                    }
+                    if(j < min_y){
+                        min_y = j;
+                    }
+                    if(j > max_y){
+                        max_y = j;
+                    }
+                }
+            }
+        }
+
+        // For every element segmented generate a template
+        //current_template = image(cv::Rect(min_x-1, min_y-1, max_x-min_x+1, max_y-min_y+1));
+
+        // Fill vector of templates
+        // templates.push_back(current_template);
+        p1.x = min_x - 1;
+        p1.y = min_y - 1;
+        p2.x = max_x + 1;
+        p2.y = max_y + 1;
+
+        coords.push_back({p1, p2});
+
+    }
+
+    return coords;
 }
 
 std::vector<cv::Mat> isolation(cv::Mat holes_problems, cv::Mat image){
@@ -303,7 +402,6 @@ std::vector<cv::Mat> isolation(cv::Mat holes_problems, cv::Mat image){
 
         // For every element segmented generate a template
         current_template = image(cv::Rect(min_x-1, min_y-1, max_x-min_x+1, max_y-min_y+1));
-        // cv::imwrite("Template.png", current_template);
 
         // Fill vector of templates
         templates.push_back(current_template);

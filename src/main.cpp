@@ -30,10 +30,10 @@ int main(){
 
    cv::Mat filtered = full_inpainting(src, color);
 
-   cv::namedWindow("Filtered", CV_WINDOW_AUTOSIZE);
-   cv::imshow("Filtered", filtered);
-
-   cv::waitKey();
+   // cv::namedWindow("Filtered", CV_WINDOW_AUTOSIZE);
+   // cv::imshow("Filtered", filtered);
+   //
+   // cv::waitKey();
 
    return 0;
 }
