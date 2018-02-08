@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include <vector>
+#include <list>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include "mcbr.h"
@@ -188,20 +189,69 @@ cv::Mat mcbr(cv::Mat image){
 }
 
 cv::Mat full_inpainting(cv::Mat depth_map, cv::Mat color){
-    cv::Mat mat_aux = depth_map.clone();
+    // cv::Mat mat_aux = depth_map.clone();
 
     cv::Mat clos_1 = closing(depth_map, 1);
     cv::Mat mcbr_fil = mcbr(depth_map);
 
+    // Holes isolation
     cv::Mat holes = hole_id(clos_1);
     cv::Mat holes_problems = noise_classificator(holes, mcbr_fil);
     std::vector<cv::Mat> templates_d = isolation(holes_problems, depth_map);
     std::vector<cv::Mat> templates_c = isolation(holes_problems, color);
-    cv::Mat result;
-    cv::matchTemplate(depth_map, templates_d[0], result, CV_TM_SQDIFF);
-    cv::imwrite("TemplateMatching.png", result);
 
-    return templates_d[1];
+    std::vector<int> matches_c = template_matching(color, templates_c);
+
+    return templates_c[1];
+}
+
+std::vector<int> template_matching(cv::Mat image, std::vector<cv::Mat> templates){
+
+  // Methods
+  std::vector<int> methods = {0, 1, 2, 3, 4, 5};
+  /* 0: SQDIFF
+     1: SQDIFF NORMED
+     2: TM CCORR
+     3: TM CCORR NORMED
+     4: TM COEFF
+     5: TM COEFF NORMED
+  */
+
+  // for(std::vector<int>::iterator itm = methods.begin(); itm!=methods.end(); ++itm){
+    cv::Mat result;
+    double threshold;
+    double minVal;
+    double maxVal;
+    cv::Point minLoc;
+    cv::Point maxLoc;
+    cv::Point matchLoc;
+
+    // cv::matchTemplate(color, templates_c[1], result, *itm);
+    cv::matchTemplate(image, templates[1], result, methods[0]);
+    cv::normalize(result, result, 0, 1, cv::NORM_MINMAX, CV_8UC1);
+    cv::minMaxLoc(result, &minVal, &maxVal, &minLoc, &maxLoc);
+
+    // matchLoc = minLoc;
+
+    // if(*it <= 3){
+      threshold = 0.95;
+      std::vector<cv::Point> points = findValue(result, threshold);
+      std::cout << points[0] << std::endl;
+      matchLoc = minLoc;
+    // }
+    // else{
+    //   threshold = 0.05;
+    //   matchLoc = minLoc;
+    // }
+  // }
+
+  cv::rectangle(image, matchLoc,
+    cv::Point(matchLoc.x + templates[1].cols, matchLoc.y + templates[1].rows),
+    cv::Scalar(255,255,255), 1, 8, 0);
+
+  cv::imwrite("TemplateMatching.png", result);
+
+  return {0,0,0,0};
 }
 
 std::vector<cv::Mat> isolation(cv::Mat holes_problems, cv::Mat image){

@@ -23,4 +23,6 @@ cv::Mat borders_removal(cv::Mat image);
 
 int max_gray_value(cv::Mat image);
 
+std::vector<cv::Point> findValue(cv::Mat image, float value);
+
 #endif /* functions_h */
