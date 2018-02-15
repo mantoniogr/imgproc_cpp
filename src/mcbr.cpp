@@ -15,6 +15,7 @@
 #include "mcbr.h"
 #include "morphology.h"
 #include "functions.h"
+#include "color.h"
 
 int min_no_zero(std::vector<int> list){
     int min = 255;
@@ -198,8 +199,12 @@ cv::Mat full_inpainting(cv::Mat depth_map, cv::Mat color){
     // Holes isolation
     cv::Mat holes = hole_id(clos_1);
     cv::Mat holes_problems = noise_classificator(holes, mcbr_fil);
+    cv::imwrite("holes_problems.png", holes_problems);
+
     std::vector<cv::Mat> templates_d = isolation(holes_problems, depth_map);
+    cv::imwrite("templated.png", templates_d[5]);
     std::vector<cv::Mat> templates_c = isolation(holes_problems, color);
+    cv::imwrite("templatec.png", templates_c[5]);
 
     std::vector<std::vector<cv::Point>> coords_c = template_coords(holes_problems, color);
     std::vector<std::vector<cv::Point>> coords_d = template_coords(holes_problems, depth_map);
@@ -207,7 +212,7 @@ cv::Mat full_inpainting(cv::Mat depth_map, cv::Mat color){
     std::vector<int> matches_d = template_matching(depth_map, templates_d, coords_d);
     // std::vector<int> matches_c = template_matching(color, templates_c, coords_c);
 
-    return templates_c[1];
+    return templates_d[5];
 }
 
 std::vector<int> template_matching(cv::Mat image, std::vector<cv::Mat> templates, std::vector<std::vector<cv::Point>> template_coords){
@@ -336,11 +341,7 @@ std::vector<std::vector<cv::Point>> template_coords(cv::Mat holes_problems, cv::
             }
         }
 
-        // For every element segmented generate a template
-        //current_template = image(cv::Rect(min_x-1, min_y-1, max_x-min_x+1, max_y-min_y+1));
-
-        // Fill vector of templates
-        // templates.push_back(current_template);
+        // Fill vector of Points
         p1.x = min_x - 1;
         p1.y = min_y - 1;
         p2.x = max_x + 1;
@@ -354,61 +355,104 @@ std::vector<std::vector<cv::Point>> template_coords(cv::Mat holes_problems, cv::
 }
 
 std::vector<cv::Mat> isolation(cv::Mat holes_problems, cv::Mat image){
-    std::vector<cv::Mat> templates;
+  cv::Mat imageAux = image.clone();
+  std::vector<cv::Mat> templates;
 
-    // Mark holes with problems in different gray level
-    cv::Mat labelled = labeling(holes_problems, 1);
+  // Mark holes with problems in different gray level
+  cv::Mat labelled = labeling(holes_problems, 1);
 
-    // For each gray level, do a threshold
-    double min, max;
-    cv::minMaxLoc(labelled, &min, &max);
+  // For each gray level, do a threshold
+  double min, max;
+  cv::minMaxLoc(labelled, &min, &max);
 
-    cv::Mat hole_n;
-    std::vector<std::vector<int>> hole_n_mat;
+  cv::Mat hole_n;
+  std::vector<std::vector<int>> hole_n_mat;
 
-    cv::Mat current_template;
+  cv::Mat current_template;
 
-    int min_x, min_y;
-    int max_x, max_y;
+  int min_x, min_y;
+  int max_x, max_y;
 
-    for(int n = 1; n <= max; n++){
-        hole_n = threshold(labelled, n, n);
-        hole_n_mat = mat2vector(hole_n);
+  for(int n = 1; n <= max; n++){
+      hole_n = threshold(labelled, n, n);
+      hole_n_mat = mat2vector(hole_n);
 
-        min_x = holes_problems.cols;
-        min_y = holes_problems.rows;
+      min_x = holes_problems.cols;
+      min_y = holes_problems.rows;
 
-        max_x = 0;
-        max_y = 0;
+      max_x = 0;
+      max_y = 0;
 
-        for(int j = 0; j < holes_problems.rows; j++){
-            for(int i = 0; i < holes_problems.cols; i++){
-                if(hole_n_mat[j][i] == 255){
-                    if(i < min_x){
-                        min_x = i;
-                    }
-                    if(i > max_x){
-                        max_x = i;
-                    }
-                    if(j < min_y){
-                        min_y = j;
-                    }
-                    if(j > max_y){
-                        max_y = j;
-                    }
-                }
+      for(int j = 0; j < holes_problems.rows; j++){
+          for(int i = 0; i < holes_problems.cols; i++){
+              if(hole_n_mat[j][i] == 255){
+                  if(i < min_x){
+                      min_x = i;
+                  }
+                  if(i > max_x){
+                      max_x = i;
+                  }
+                  if(j < min_y){
+                      min_y = j;
+                  }
+                  if(j > max_y){
+                      max_y = j;
+                  }
+              }
+          }
+      }
+
+      // For every element segmented generate a template
+      current_template = imageAux(cv::Rect(min_x-1, min_y-1, max_x-min_x+1, max_y-min_y+1));
+
+      if(imageAux.channels() == 1){
+        std::vector<std::vector<int>> template_v = mat2vector(current_template);
+        for(int j = 0; j < current_template.rows; j++){
+          for(int i = 0; i < current_template.cols; i++){
+            if(hole_n_mat[j+min_y][i+min_x] != 255){
+              template_v[j][i] = 255;
             }
+          }
+        }
+        current_template = vector2mat(template_v);
+      }
+      if(imageAux.channels() == 3){
+        cv::Mat matB = split_rgb(current_template, 0);
+        cv::Mat matG = split_rgb(current_template, 1);
+        cv::Mat matR = split_rgb(current_template, 2);
+
+        std::vector<std::vector<int>> vecB = mat2vector(matB);
+        std::vector<std::vector<int>> vecG = mat2vector(matG);
+        std::vector<std::vector<int>> vecR = mat2vector(matR);
+
+        for(int j = 0; j < current_template.rows; j++){
+          for(int i = 0; i < current_template.cols; i++){
+            if(hole_n_mat[j+min_y][i+min_x] != 255){
+              vecB[j][i] = 255;
+              vecG[j][i] = 255;
+              vecR[j][i] = 255;
+            }
+          }
         }
 
-        // For every element segmented generate a template
-        current_template = image(cv::Rect(min_x-1, min_y-1, max_x-min_x+1, max_y-min_y+1));
+        matB = vector2mat(vecB);
+        matG = vector2mat(vecG);
+        matR = vector2mat(vecR);
 
-        // Fill vector of templates
-        templates.push_back(current_template);
+        std::vector<cv::Mat> channels;
+        channels.push_back(matB);
+        channels.push_back(matG);
+        channels.push_back(matR);
 
-    }
+        cv::merge(channels, current_template);
+      }
 
-    return templates;
+      // Fill vector of templates
+      templates.push_back(current_template);
+
+  }
+
+  return templates;
 }
 
 cv::Mat noise_classificator(cv::Mat image, cv::Mat depth_mcbr){

@@ -20,7 +20,7 @@ int main(){
    std::cout << "Paper 3 Application" << "\n";
 
    src = cv::imread("images/cones-disp2.png", 1);
-   color = cv::imread("images/cones-im2.png", 1);
+   color = cv::imread("images/cones-im2.png");
 
    src = rgb2gray(src);
 
@@ -30,10 +30,10 @@ int main(){
 
    cv::Mat filtered = full_inpainting(src, color);
 
-   // cv::namedWindow("Filtered", CV_WINDOW_AUTOSIZE);
-   // cv::imshow("Filtered", filtered);
-   //
-   // cv::waitKey();
+   cv::namedWindow("Filtered", CV_WINDOW_AUTOSIZE);
+   cv::imshow("Filtered", filtered);
+
+   cv::waitKey();
 
    return 0;
 }
